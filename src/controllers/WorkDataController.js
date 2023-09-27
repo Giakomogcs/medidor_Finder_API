@@ -152,7 +152,7 @@ class WorkDataController{
         .where('workdata.timestamp', '>=', start)
         .where('workdata.timestamp', '<=', end)
         .groupBy("workdata.timestamp")
-        .orderBy("workdata.timestamp", 'desc')
+        .orderBy("workdata.timestamp")
       }
       
       return response.json({
