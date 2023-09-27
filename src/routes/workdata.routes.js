@@ -8,7 +8,7 @@ const workdataController = new WorkDataController();
 
 
 workdataRoutes.get("/:name", workdataController.status);
-workdataRoutes.get("/state/:name", workdataController.state);
+workdataRoutes.get("/hist/:name", workdataController.hist);
 workdataRoutes.post("/", workdataController.create);
 
 module.exports = workdataRoutes;

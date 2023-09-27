@@ -47,10 +47,54 @@ class WorkDataController{
     
     async status(request,response){
       const{name} = request.params
+      
+      let datas
+      
+      const machine = await knex("machines").where({name}).first()
+
+      if (!machine){
+        throw new AppError("Não foi possível encontrar a máquina (machine_id)")
+      }
+      
+      else{
+        datas = await knex("workdata")
+        .select([
+          "workdata.machine_id",
+          "workdata.Pt", 
+          "workdata.Qt", 
+          "workdata.St", 
+          "workdata.PFt", 
+          "workdata.Frequency",
+          "workdata.U1", 
+          "workdata.U2", 
+          "workdata.U3", 
+          "workdata.I1", 
+          "workdata.I2", 
+          "workdata.I3",
+          "workdata.timestamp"
+        ])
+        .where("workdata.machine_id", machine.id)
+        .groupBy("workdata.timestamp")
+        .orderBy("workdata.timestamp", 'desc')
+        .first()
+      }
+
+      return response.json({
+        datas
+      })
+  
+    }
+
+
+
+    async hist(request,response){
+      const{name} = request.params
       let {start, end} = request.query;
 
       //start ? start = start : start = new Date().getDate() -2
       //end ? end = end : end = new Date().toLocaleDateString() 
+
+      
       
       if (!start) {
         // Se start não foi fornecido na query, defina-o como dois dias atrás do dia atual.
@@ -80,10 +124,6 @@ class WorkDataController{
       }
       
       let datas
-      let work = 0
-      let available = 0
-      let times = []
-      let types = []
       
       const machine = await knex("machines").where({name}).first()
 
@@ -109,46 +149,14 @@ class WorkDataController{
           "workdata.timestamp"
         ])
         .where("workdata.machine_id", machine.id)
-        //.where('workdata.timestamp', '>=', start)
-        //.where('workdata.timestamp', '<=', end)
+        .where('workdata.timestamp', '>=', start)
+        .where('workdata.timestamp', '<=', end)
         .groupBy("workdata.timestamp")
         .orderBy("workdata.timestamp", 'desc')
-        .first()
       }
       
-      
-
       return response.json({
         datas
-      })
-  
-    }
-
-
-
-    async state(request,response){
-      const{name} = request.params
-
-      const machine = await knex("machines").where({name}).first()
-
-      if (!machine){
-        throw new AppError("Não foi possível encontrar a máquina (machine_id)")
-      }
-      
-      const data = await knex("workdata")
-        .select([
-          "workdata.machine_id",
-          "workdata.working",
-          "workdata.available",
-          "workdata.timestamp"
-        ])
-        .where("workdata.machine_id", machine.id)
-        .orderBy("timestamp", "desc")
-        .first();
-      
-
-      return response.json({
-        data
       })
   
     }
