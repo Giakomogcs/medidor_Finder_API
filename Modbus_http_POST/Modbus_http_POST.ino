@@ -9,9 +9,11 @@ constexpr auto btime { 1.0f / baudrate };
 constexpr auto predl { btime * 9.6f * 3.5f * 1e6 };
 constexpr auto postdl { btime * 9.6f * 3.5f * 1e6 };
 
-const char* ssid                       = "PLANTA_CFP123";                  // WIFI
-const char* password                   = "WiFiSen@i123";                  // SENHA WIFI
-const char* server                     = "10.84.22.44";            // ROTA DO SERVIDOR
+//const char* ssid                       = "PLANTA_CFP123";                  // WIFI
+const char* ssid                       = "drogaeobraya";                  // WIFI
+//const char* password                   = "WiFiSen@i123";                  // SENHA WIFI
+const char* password                   = "drogaeobraya";                  // SENHA WIFI
+const char* server                     = "medidor-finder.onrender.com";            // ROTA DO SERVIDOR
  
 WiFiClient client;
 
@@ -32,6 +34,7 @@ void setup()
 {
   Serial.begin(115200);
   delay(2000);
+  pinMode(LED_D3, OUTPUT);
 
   wifiConnect();
   ModbusConnect();
@@ -41,6 +44,11 @@ void loop()
 {
   wifiConnect();
   ler_Modbus();
+
+  digitalWrite(LED_D3, HIGH);
+  delay(500);
+  digitalWrite(LED_D3, LOW);
+  delay(500);
 }
 
 
@@ -80,6 +88,7 @@ void ModbusConnect()
 
 void ler_Modbus()
 {
+  Serial.println("Lendo MODBUS");
   //0x09BA - POTÊNCIA ATIVA TOTAL 32490-32491
   POTENCIA_ATIVA_TOTAL = readdata(0x21, 0X9BA);
   
@@ -135,15 +144,32 @@ float readdata(int addr, int reg) {
 
 void enviarPost() 
 {
-  String dataToSend = "{\"machine_id\":\"" + String(machine_id) + "\",\"Pt\":\"" + String(POTENCIA_ATIVA_TOTAL) + "\",\"Qt\":\"" + String(POTENCIA_REATIVA_TOTAL) + "\",\"St\":\"" + String(POTENCIA_APARENTE_TOTAL) + "\",\"PFt\":\"" + String(FATOR_POTENCIA) + "\",\"Frequency\":\"" + String(FREQUENCIA) + "\",\"U1\":\"" + String(U1) + "\",\"U2\":\"" + String(U2) + "\",\"U3\":\"" + String(U3) + "\",\"I1\":\"" + String(I1) + "\",\"I2\":\"" + String(I2) + "\",\"I3\":\"" + String(I3) + "\"}";
+  Serial.print("Try Post");
+  //String dataToSend = "{\"machine_id\":\"" + String(machine_id) + "\",\"Pt\":\"" + String(POTENCIA_ATIVA_TOTAL) + "\",\"Qt\":\"" + String(POTENCIA_REATIVA_TOTAL) + "\",\"St\":\"" + String(POTENCIA_APARENTE_TOTAL) + "\",\"PFt\":\"" + String(FATOR_POTENCIA) + "\",\"Frequency\":\"" + String(FREQUENCIA) + "\",\"U1\":\"" + String(U1) + "\",\"U2\":\"" + String(U2) + "\",\"U3\":\"" + String(U3) + "\",\"I1\":\"" + String(I1) + "\",\"I2\":\"" + String(I2) + "\",\"I3\":\"" + String(I3) + "\"}";
+  //String dataToSend = "{" + "\"machine_id\":\"" + String(machine_id) + "\",\"Pt\":\"" + String(POTENCIA_ATIVA_TOTAL) + "\",\"Qt\":\"" + String(POTENCIA_REATIVA_TOTAL) + "\",\"St\":\"" + String(POTENCIA_APARENTE_TOTAL) + "\",\"PFt\":\"" + String(FATOR_POTENCIA) + "\",\"Frequency\":\"" + String(FREQUENCIA) + "\",\"U1\":\"" + String(U1) + "\",\"U2\":\"" + String(U2) + "\",\"U3\":\"" + String(U3) + "\",\"I1\":\"" + String(I1) + "\",\"I2\":\"" + String(I2) + "\",\"I3\":\"" + String(I3) + "\"}";
+
+  String dataToSend = String("{") + 
+                   "\"machine_id\":\"" + String(machine_id) + "\"," +
+                   "\"Pt\":\"" + String(POTENCIA_ATIVA_TOTAL) + "\"," +
+                   "\"Qt\":\"" + String(POTENCIA_REATIVA_TOTAL) + "\"," +
+                   "\"St\":\"" + String(POTENCIA_APARENTE_TOTAL) + "\"," +
+                   "\"PFt\":\"" + String(FATOR_POTENCIA) + "\"," +
+                   "\"Frequency\":\"" + String(FREQUENCIA) + "\"," +
+                   "\"U1\":\"" + String(U1) + "\"," +
+                   "\"U2\":\"" + String(U2) + "\"," +
+                   "\"U3\":\"" + String(U3) + "\"," +
+                   "\"I1\":\"" + String(I1) + "\"," +
+                   "\"I2\":\"" + String(I2) + "\"," +
+                   "\"I3\":\"" + String(I3) + "\"}";
 
 
-  if (client.connect(server, 3333)) {
+  if (client.connect(server,443)) {
     Serial.println("Connected to server");
-    client.println("POST /data HTTP/1.1");
+    client.println  ("POST /data HTTP/1.1");
     client.print("Host: ");
     client.println(server);
     client.println("Content-Type: application/json");
+    client.println("Connection: close");
     client.print("Content-Length: ");
     client.println(dataToSend.length());
     client.println();
@@ -151,7 +177,6 @@ void enviarPost()
     client.println();
 
     String resposta = "";
-
     while (client.connected()) {
       if (client.available()) {
         char c = client.read();

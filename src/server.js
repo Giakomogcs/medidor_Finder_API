@@ -10,6 +10,14 @@ const routes = require("./routes")
 migrationsRun()
 
 const app = express()
+
+app.use((request, response, next) => {
+  response.header('Access-Control-Allow-Origin', '*'); // Permite solicitações de qualquer origem
+  response.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  response.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
 app.use(express.json())
 
 app.use(cors());
